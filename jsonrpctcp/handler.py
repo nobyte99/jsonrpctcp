@@ -31,7 +31,7 @@ class Handler(object):
                 attr = getattr(self, key)
                 # Tree syntax
                 if issubclass(type(attr), Handler) and attr != self:
-                    for name, handler in attr._handlers.iteritems():
+                    for name, handler in attr._handlers.items():
                         name = '%s.%s' % (key, name)
                         handlers[name] = handler
                 # Normal syntax

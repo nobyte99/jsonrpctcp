@@ -42,7 +42,7 @@ class Client(object):
     def __getattr__(self, key):
         if key.startswith('_'):
             raise AttributeError('Methods that start with _ are not allowed.')
-        req_id = u'%s' % uuid.uuid4()
+        req_id = '%s' % uuid.uuid4()
         request = ClientRequest(self, namespace=key, req_id=req_id)
         self._requests.append(request)
         return request
@@ -93,7 +93,7 @@ class Client(object):
         self._request = request
         message = json.dumps(request)
         notify = False
-        if not request.has_key('id'):
+        if 'id' not in request:
             notify = True
         response_text = self._send_and_receive(message, notify=notify)
         response = self._parse_response(response_text)
@@ -110,7 +110,7 @@ class Client(object):
         """
         ids = []
         for request in requests:
-            if request.has_key('id'):
+            if 'id' in request:
                 ids.append(request['id'])
         self._request = requests
         message = json.dumps(requests)
@@ -135,14 +135,19 @@ class Client(object):
         # Starting with a clean history
         history.request = message
         logger.debug('CLIENT | REQUEST: %s' % message)
+                
         if self._key:
             crypt = config.crypt.new(self._key)
             length = config.crypt_chunk_size
             pad_length = length - (len(message) % length)
             message = crypt.encrypt('%s%s' % (message, ' '*pad_length))
+        print(message)
+        if type(message) == type("message"):  # encode
+            message = message.encode("utf-8")
+        
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(config.timeout)
-        sock.connect(self._addr)
+        sock.connect(self._addr)       
         sock.send(message)
         
         responselist = []
@@ -157,6 +162,8 @@ class Client(object):
                     break
                 if not data: 
                     break
+                if type(data) != type("data"):
+                    data = data.decode("utf-8")
                 responselist.append(data)
                 if len(data) < config.buffer:
                     break
@@ -182,7 +189,7 @@ class Client(object):
             obj = json.loads(response)
         except ValueError:
             raise ProtocolError(-32700)
-        if type(obj) is dict and obj.has_key('error'):
+        if type(obj) is dict and 'error' in obj:
             raise ProtocolError(
                 obj.get('error').get('code'),
                 obj.get('error').get('message'),
@@ -292,10 +299,10 @@ def validate_response(response):
     the JSON-RPC spec, and checks for errors, raising exceptions
     as necessary.
     """
-    jsonrpc = response.has_key('jsonrpc')
-    response_id = response.has_key('id')
-    result = response.has_key('result')
-    error = response.has_key('error')
+    jsonrpc = 'jsonrpc' in response
+    response_id = 'id' in response
+    result = 'result' in response
+    error = 'error' in response
     if not jsonrpc or not response_id or (not result and not error):
         raise Exception('Server returned invalid response.')
     if error:
@@ -313,11 +320,11 @@ def test_client():
     value = 'Testing!'
     result = conn.echo(value)
     assert result == value
-    print 'Single test completed.'
+    print('Single test completed.')
     
     result = conn._notification.echo(message='No response!')
     assert result == None
-    print 'Notify test completed.'
+    print('Notify test completed.')
     
     batch = conn._batch()
     batch.tree.echo(message="First!")
@@ -327,30 +334,30 @@ def test_client():
     for i in batch():
         results.append(i)
     assert results == ['First!', 'Last!']
-    print 'Batch test completed.'
+    print('Batch test completed.')
     
     result = conn.echo(message=5)
     assert result == 5
-    print 'Post-batch test completed.'
+    print('Post-batch test completed.')
     
     try:
         conn.echo()
-    except Exception, e:
-        print 'Bad call had necessary exception.'
-        print e.code, e.message
+    except Exception as e:
+        print('Bad call had necessary exception.')
+        print(e.code, e.message)
     else:
-        print 'ERROR: Did not throw exception for bad call.'
+        print('ERROR: Did not throw exception for bad call.')
         
     try:
         conn.foobar(5, 6)
-    except Exception, e:
-        print 'Invalid method threw exception.'
-        print e.code, e.message
+    except Exception as e:
+        print('Invalid method threw exception.')
+        print(e.code, e.message)
     else:
-        print 'ERROR: Did not throw exception for bad method.'
+        print('ERROR: Did not throw exception for bad method.')
     
-    print '============================='
-    print "Tests completed successfully."
+    print('=============================')
+    print("Tests completed successfully.")
     
 if __name__ == "__main__":
     import sys    

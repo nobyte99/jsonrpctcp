@@ -170,7 +170,7 @@ class TestCompatibility(unittest.TestCase):
         job_requests = [j._request() for j in multicall._requests]
         job_requests.insert(3, {"foo": "boo"})
         json_requests = '[%s]' % ','.join(
-            map(lambda x:json.dumps(x), job_requests)
+            [json.dumps(x) for x in job_requests]
         )
         requests = json.loads(json_requests)
         response_text = CLIENT._send_and_receive(json_requests, batch=True)
@@ -206,7 +206,7 @@ class TestCompatibility(unittest.TestCase):
             response = None
             if request.get('method') != 'notify_hello':
                 req_id = request.get('id')
-                if verify_request.has_key('id'):
+                if 'id' in verify_request:
                     verify_request['id'] = req_id
                 verify_response = verify_responses[response_i]
                 verify_response['id'] = req_id
@@ -217,7 +217,7 @@ class TestCompatibility(unittest.TestCase):
             
         for response in responses:
             verify_response = responses_by_id.get(response.get('id'))
-            if verify_response.has_key('error'):
+            if 'error' in verify_response:
                 verify_response['error']['message'] = \
                     response['error']['message']
             self.assertTrue(response == verify_response)

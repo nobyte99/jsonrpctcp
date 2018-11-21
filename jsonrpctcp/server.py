@@ -118,7 +118,7 @@ class JSONRequest(object):
             assert issubclass(method, Handler)
             # If it's an actual Handler subclass
             handler_instance = method(self)
-            for hname, method in handler_instance._handlers.iteritems():
+            for hname, method in handler_instance._handlers.items():
                 if name:
                     hname = '%s.%s' % (name, hname)
                 self.handlers[hname] = method
@@ -130,7 +130,7 @@ class JSONRequest(object):
             
     def get_handler(self, name):
         """ Check for an attached handler and return it. """
-        if self.handlers.has_key(name):
+        if name in self.handlers:
             return self.handlers[name]
         return None
                 
@@ -224,12 +224,12 @@ class ProcessRequest(object):
             request_error = ProtocolError(-32600)
             if type(req) is not dict:
                 responses.append(request_error.generate_error())
-            elif 'method' not in req.keys() or \
-                type(req['method']) not in types.StringTypes:
+            elif 'method' not in list(req.keys()) or \
+                type(req['method']) not in (str,):
                 responses.append(request_error.generate_error())
             else:
                 result = self.parse_call(req)
-                if req.has_key('id'):
+                if 'id' in req:
                     response = generate_response(result, id=req.get('id'))
                     responses.append(response)
         if not responses:
@@ -335,13 +335,13 @@ def test_server():
     server_thread.daemon = True
     server_thread.start()
     
-    print "Server running: %s:%s" % (host, port)
+    print("Server running: %s:%s" % (host, port))
     
     try:
         while True:
             time.sleep(0.5)
     except KeyboardInterrupt:
-        print 'Finished.'
+        print('Finished.')
         sys.exit()
     
     
