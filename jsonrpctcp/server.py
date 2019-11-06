@@ -164,6 +164,8 @@ class ProcessRequest(object):
             data = self.get_data()
             if not data: 
                 break
+            if type(data) != type('data'):
+                  data=data.decode('utf-8')
             requestlines.append(data)
             if len(data) < config.buffer: 
                 break
@@ -191,6 +193,9 @@ class ProcessRequest(object):
                 length = config.crypt_chunk_size
                 pad_length = length - (len(response) % length)
                 response = crypt.encrypt('%s%s' % (response, ' '*pad_length))
+       
+            if type(response)== type('response'):               
+                  response = response.encode('utf-8')
             self.socket.send(response)
         self.socket.close()
 
